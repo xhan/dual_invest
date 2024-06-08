@@ -217,6 +217,7 @@ td {
 th {
     background-color: #f2f2f2;
     text-align: left;
+    color: black;
 }
 
 .apr-0-5 {
