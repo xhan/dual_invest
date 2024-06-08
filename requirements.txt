@@ -1,2 +1,4 @@
 python-binance   #非官方，支持 async
 nest_asyncio
+fastapi
+python-dotenv
