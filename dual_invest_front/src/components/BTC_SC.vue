@@ -1,0 +1,7 @@
+<script setup>
+import DataTable from "./DataTable.vue";
+</script>
+
+<template>
+    <DataTable title="BTC/USDT 高卖" url="ws://localhost:8000/btc/sc"/>
+</template>
