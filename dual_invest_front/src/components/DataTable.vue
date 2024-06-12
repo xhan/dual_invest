@@ -1,9 +1,11 @@
 <template>
     <div>
-        <h1> {{ title }}</h1>
-        
-        <p>最后一次接收数据的时间：{{ lastReceivedTime }}</p>
-        <p>更新倒计时：{{ countdown }}</p>
+        <h1> {{ title }} </h1>
+        <h2 v-if="price">Price: {{ price }}</h2>
+        <h2 v-else>Loading...</h2>
+
+        <p>Last updated at: {{ lastReceivedTime }} , 更新倒计时：{{ countdown }}</p>
+
         <button @click="toggleAutoUpdate">
             {{ autoUpdate ? '关闭自动更新' : '开启自动更新' }}
         </button>
@@ -12,12 +14,14 @@
             <thead>
                 <tr>
                     <th></th>
+                    <th>%</th>
                     <th v-for="date in settleDates" :key="date">{{ formatDate(date) }}</th>
                 </tr>
             </thead>
             <tbody>
                 <tr v-for="price in strikePrices" :key="price">
                     <td>{{ price }}</td>
+                    <td>{{ ((price/this.price - 1 )*100).toFixed(2) }}</td>
                     <td v-for="date in settleDates" :key="date" :class="getAprClass(getAprValue(price, date))">
                         {{ getAprString(getAprValue(price, date)) }}
                     </td>
@@ -27,14 +31,22 @@
     </div>
 </template>
 
+
 <script>
+import { inject } from 'vue'
 export default {
+    setup(){
+        const API_HOST = inject('API_HOST')
+        return {API_HOST}
+    },
 
     props: {
         
         title: String,
         url: String,
         price_sort_desc: Boolean,
+        symbol : String,
+        dualpath : String
     },
     data() {
         return {
@@ -47,18 +59,21 @@ export default {
             lastReceivedTime: '',
             countdown:10,
             ws:null,
+            wsPrice:null,
             autoUpdate: true,
             intervalId: null,
+            price: null
         };
     },
     mounted() {
-        this.ws = new WebSocket(this.url);
+        this.ws = new WebSocket(this.API_HOST + this.dualpath);
+        this.wsPrice = new WebSocket(this.API_HOST + `/price/` + this.symbol);
         this.connectWebSocket();
         this.startCountdown();
     },
     methods: {
         connectWebSocket() {
-            // const ws = new WebSocket('ws://localhost:8000/ws2'); // 替换为你的WebSocket服务器地址
+            
             const ws = this.ws;
             ws.onmessage = (event) => {
                 const serverData = JSON.parse(event.data);
@@ -73,7 +88,17 @@ export default {
             ws.onclose = () => {
                 console.log('WebSocket connection closed');
             };
+
+            // price
+            this.wsPrice.onmessage = (event) => {
+                const serverData = JSON.parse(event.data);
+                this.price = serverData.price;
+                if (this.price != null) {
+                    this.price = parseFloat(this.price).toFixed(2)
+                }
+            }
         },
+
         updateDataList(newList) {
             const updatedList = [...this.data.list];
 
@@ -130,7 +155,7 @@ export default {
                 if (this.autoUpdate) {
                     this.countdown--;
                     if (this.countdown === 0) {
-                        this.sendCurrentTime();
+                        this.requestData();
                         this.countdown = 10;
                     }
                 }
@@ -142,9 +167,11 @@ export default {
                 this.intervalId = null;
             }
         },
-        sendCurrentTime() {
+        requestData() {
+            // update time
             const currentTime = new Date().toISOString();
             this.ws.send(currentTime);
+            this.wsPrice.send(currentTime);
         },
     
         toggleAutoUpdate() {

@@ -1,8 +1,13 @@
 import './assets/main.css'
 
 import { createApp } from 'vue'
+
 import App from './App.vue'
 import router from './router'
 
 
-createApp(App).use(router).mount('#app')
+
+const app = createApp(App).use(router)
+app.provide("API_HOST", import.meta.env.API_HOST || 'ws://localhost:8000');
+app.mount('#app')
+

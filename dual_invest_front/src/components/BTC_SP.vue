@@ -3,5 +3,5 @@ import DataTable from "./DataTable.vue";
 </script>
 
 <template>
-    <DataTable title="BTC/USDT 低买" url="ws://localhost:8000/btc/sp" price_sort_desc="true"/>
+    <DataTable title="BTC/USDT 低买" dualpath="/btc/sp" price_sort_desc="true" symbol="BTCUSDT" />
 </template>

@@ -17,8 +17,6 @@ app = FastAPI()
 
 
 
-
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -26,7 +24,29 @@ async def websocket_endpoint(websocket: WebSocket):
         data = await websocket.receive_text()
         await websocket.send_text(f"Message text was: {data}")
 
+"""
+return 
+        {
+        symbol: "BTCUSDT",
+        price: "67434.35000000"
+        }
+"""
+@app.websocket("/price/{symbol}")
+async def get_price(websocket: WebSocket , symbol:str):
+    symbol = symbol.upper()
 
+    await websocket.accept()
+    while True:
+        client = await AsyncClient.create(BN_KEY, BN_SECRET)
+        ret = await client.get_symbol_ticker(symbol=symbol.upper())
+        await websocket.send_text(json.dumps(ret, indent=4))
+        await websocket.receive_text()
+
+
+
+"""
+/btc/sp /btc/sc 
+"""
 @app.websocket('/{coin}/{type}')
 async def websocket_dual_invest(websocket: WebSocket, coin: str, type: str):
     if coin not in ['btc', 'eth'] or type not in ['sp', 'sc']:
@@ -82,8 +102,8 @@ async def get_dual_list(client,pageSize=100, pageIndex=1,coin:str = 'btc' ,type:
     })
     print(params)
 
-    ret = await client._request_margin_api('get', '/dci/product/list', True, data=params)
-    return ret
+    return await client._request_margin_api('get', '/dci/product/list', True, data=params)
+    # return ret
 
 
 
