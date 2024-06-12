@@ -1,4 +1,5 @@
 .env
+server/public/*
 
 *.pyc
 __pycache__/*
